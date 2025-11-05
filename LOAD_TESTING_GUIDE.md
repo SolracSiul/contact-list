@@ -420,10 +420,3 @@ agenda/
 - [Micrometer Metrics](https://micrometer.io/docs)
 
 ---
-
-## Contato e Suporte
-
-Para dúvidas ou problemas, consulte:
-- Documentação do Spring Boot Actuator
-- Comunidade JMeter
-- Issues do projeto no GitHub
