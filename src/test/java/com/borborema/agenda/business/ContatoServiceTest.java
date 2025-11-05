@@ -132,7 +132,7 @@ class ContatoServiceTest {
 
         Contato novosDados = Contato.builder()
                 .nome("João Pedro Silva")
-                .numero(null)  // Não atualiza o número
+                .numero(null)
                 .build();
 
         when(contatoRepository.findByNumero(numero)).thenReturn(Optional.of(contatoExistente));
