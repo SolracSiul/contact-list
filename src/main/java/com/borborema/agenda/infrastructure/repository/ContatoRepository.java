@@ -4,6 +4,7 @@ import com.borborema.agenda.infrastructure.entitys.Contato;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ContatoRepository extends JpaRepository<Contato, Integer> {
 
@@ -12,5 +13,8 @@ public interface ContatoRepository extends JpaRepository<Contato, Integer> {
 
     @Transactional
     void deleteByNumero(Long numero);
+
+    @Transactional
+    void deleteByNumeroAndUser_UserId(Long numero, UUID userid);
 
 }

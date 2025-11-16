@@ -1,6 +1,9 @@
 package com.borborema.agenda.infrastructure.entitys.user;
 
+import com.borborema.agenda.infrastructure.entitys.Contato;
+import com.borborema.agenda.infrastructure.models.UserDTO;
 import com.borborema.agenda.infrastructure.models.UserRegisterDTO;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -31,10 +35,26 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
+    private List<Contato> contatos = new ArrayList<>();
+
     public User (UserRegisterDTO user){
         this.email = user.email();
         this.password = user.password();
         this.role = user.userRole();
+    }
+
+    public static List<UserDTO> entityListToDto(List<User> users) {
+
+        List<UserDTO> usersDTO = new ArrayList<>();
+
+        users.forEach(user -> {
+            UserDTO userDTO = new UserDTO(user.userId, user.email,user.password,user.contatos);
+            usersDTO.add(userDTO);
+        });
+
+        return usersDTO;
     }
 
     public String getEmail() {
@@ -82,5 +102,31 @@ public class User implements UserDetails {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public List<Contato> getContatos() {
+        return contatos;
+    }
+
+    public void setContatos(List<Contato> contatos) {
+        this.contatos = contatos;
+    }
+
+    public void adicionarContato(Contato contato) {
+        contatos.add(contato);
+        contato.setUser(this);
+    }
+
+    public void removerContato(Contato contato) {
+        contatos.remove(contato);
+        contato.setUser(null);
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 }

@@ -5,6 +5,7 @@ import com.borborema.agenda.business.UserService;
 
 import com.borborema.agenda.infrastructure.entitys.user.User;
 import com.borborema.agenda.infrastructure.models.UserAuthenticationDTO;
+import com.borborema.agenda.infrastructure.models.UserDTO;
 import com.borborema.agenda.infrastructure.models.UserRegisterDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,21 +34,13 @@ public class UserController {
        return ResponseEntity.ok(token);
     }
 
-
     @GetMapping("list")
-    public ResponseEntity<List<User>> getUsers (){
+    public ResponseEntity<List<UserDTO>> getUsers (){
        List<User> users = userService.listUsers();
-       return ResponseEntity.ok(users);
+
+       List<UserDTO> usersDTO = User.entityListToDto(users);
+
+       return ResponseEntity.ok(usersDTO);
     }
 
-    /*
-    @DeleteMapping
-    public ResponseEntity<String> deleteUser (){
-
-    }
-
-    @PutMapping
-    public ResponseEntity<String> updateUser (){
-
-    }*/
 }
