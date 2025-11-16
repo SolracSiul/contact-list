@@ -5,6 +5,7 @@ import com.borborema.agenda.infrastructure.entitys.user.User;
 import com.borborema.agenda.infrastructure.models.ContatoDTO;
 import com.borborema.agenda.infrastructure.repository.ContatoRepository;
 import com.borborema.agenda.infrastructure.repository.UserRepository;
+import com.borborema.agenda.infrastructure.util.CriptoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,10 @@ public class ContatoService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    CriptoService criptoService;
+
+    int chave = 3;
 
     public ContatoService(ContatoRepository crepository){
         this.crepository = crepository;
@@ -44,6 +49,10 @@ public class ContatoService {
         contato.setUser(user);
         contato.setNome(contatoDTO.nome());
         contato.setNumero(contatoDTO.numero());
+
+        String tag = criptoService.cifraCesar(contato.getNome(), chave);
+
+        contato.setTag(tag);
 
         crepository.saveAndFlush(contato);
     }

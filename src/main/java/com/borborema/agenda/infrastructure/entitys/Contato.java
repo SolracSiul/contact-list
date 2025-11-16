@@ -5,7 +5,6 @@ import com.borborema.agenda.infrastructure.models.ContatoDAO;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +28,8 @@ public class Contato {
     @Column(name = "numero", unique = true)
     private Long numero;
 
-
+    @Column(name = "tag")
+    private String tag;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -79,5 +79,11 @@ public class Contato {
         return contactsDAO;
     }
 
+    public String getTag() {
+        return tag;
+    }
 
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
 }
