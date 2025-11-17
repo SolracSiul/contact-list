@@ -9,6 +9,12 @@ import com.borborema.agenda.infrastructure.util.CriptoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,17 +46,28 @@ public class ContatoService {
        return usuario.getContatos();
     }
 
-    public void salvarContato(ContatoDTO contatoDTO){
+    public void salvarContato(ContatoDTO contatoDTO, String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         User user = userRepository.findById(contatoDTO.userId()).orElseThrow(() -> new RuntimeException(("Usuario não encontrado")));
 
         Contato contato = new Contato();
 
         contato.setUser(user);
+
+        String cleanKey = publicKey.replaceAll("\\s", "+");
+
+        byte[] decoded = Base64.getDecoder().decode(cleanKey);
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+
+        String endereco = criptoService.rsaEncrypt(contatoDTO.endereco(),kf.generatePublic(spec));
+
         contato.setNome(contatoDTO.nome());
         contato.setNumero(contatoDTO.numero());
+        contato.setEndereco(endereco);
 
-        String tag = criptoService.cifraCesar(contato.getNome(), chave);
+        String tag = criptoService.cesarEncrypt(contato.getNome(), chave);
 
         contato.setTag(tag);
 

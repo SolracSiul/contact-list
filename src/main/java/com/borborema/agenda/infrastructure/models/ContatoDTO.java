@@ -2,5 +2,5 @@ package com.borborema.agenda.infrastructure.models;
 
 import java.util.UUID;
 
-public record ContatoDTO(String nome, long numero, UUID userId) {
+public record ContatoDTO(String nome, long numero, String endereco, UUID userId) {
 }

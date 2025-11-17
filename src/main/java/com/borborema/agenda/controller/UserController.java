@@ -24,8 +24,8 @@ public class UserController {
 
     @PostMapping("create")
     public ResponseEntity createUser(@RequestBody UserRegisterDTO userDto){
-        userService.createUser(userDto);
-        return ResponseEntity.ok().build();
+        String publicKey =  userService.createUser(userDto);
+        return ResponseEntity.ok(publicKey);
     }
 
     @PostMapping("login")

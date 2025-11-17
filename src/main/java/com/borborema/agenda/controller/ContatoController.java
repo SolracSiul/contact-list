@@ -9,6 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.crypto.BadPaddingException;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,18 +29,33 @@ public class ContatoController {
     ContatoService contatoService;
 
     @PostMapping
-    public ResponseEntity<Void> salvarContato(@RequestBody ContatoDTO contato){
-        contatoService.salvarContato(contato);
+    public ResponseEntity<Void> salvarContato(@RequestBody ContatoDTO contato, @RequestParam String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        contatoService.salvarContato(contato, publicKey);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("list/user/contacts")
-    public ResponseEntity<List<ContatoDAO>> findUserContacts(@RequestParam UUID userId) {
+    public ResponseEntity<List<ContatoDAO>> findUserContacts(@RequestParam UUID userId) throws NoSuchAlgorithmException, InvalidKeySpecException {
         List<Contato> contatos = contatoService.findContactsByUserId(userId);
 
-       List<ContatoDAO> contactsDAO = Contato.contactToDAO(contatos);
+       String stringKey =  contatos.get(0).getUser().getPrivateKey();
+
+        byte[] decoded = Base64.getDecoder().decode(stringKey);
+
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
+
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+
+        PrivateKey privateKey = kf.generatePrivate(keySpec);
+
+
+        List<ContatoDAO> contactsDAO = Contato.contactToDAO(contatos,privateKey );
 
         return ResponseEntity.ok(contactsDAO);
+
+
+
+
     }
 
     @GetMapping("list/user/contact")
