@@ -1,3 +1,4 @@
+
 # Guia de Testes de Carga - Agenda API
 
 Este guia explica como executar testes de carga na API de Agenda usando JMeter e monitorar os resultados usando Prometheus e Grafana.

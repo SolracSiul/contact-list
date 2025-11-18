@@ -1,0 +1,322 @@
+{
+	"info": {
+		"name": "Agenda API - Helper Collection",
+		"description": "Collection completa para testar a API Agenda com criptografia (feature/criptografia)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "publicKey",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "1. Criar Usuário",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva a chave pública retornada",
+									"if (pm.response.code === 200) {",
+									"    var publicKey = pm.response.text();",
+									"    pm.collectionVariables.set(\"publicKey\", publicKey);",
+									"    console.log(\"Public Key salva: \" + publicKey);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"senha123\",\n  \"userRole\": \"USER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/user/create",
+							"host": ["{{baseUrl}}"],
+							"path": ["user", "create"]
+						},
+						"description": "Cria um novo usuário e retorna a chave pública RSA. A chave pública retornada será salva automaticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Salva o token JWT retornado",
+									"if (pm.response.code === 200) {",
+									"    var token = pm.response.text();",
+									"    pm.collectionVariables.set(\"token\", token);",
+									"    console.log(\"Token JWT salvo: \" + token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/user/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["user", "login"]
+						},
+						"description": "Autentica o usuário e retorna um token JWT. O token será salvo automaticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Listar Usuários",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/user/list",
+							"host": ["{{baseUrl}}"],
+							"path": ["user", "list"]
+						},
+						"description": "Lista todos os usuários cadastrados. Copie o userId de um usuário para usar nos endpoints de contatos."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints relacionados ao gerenciamento de usuários"
+		},
+		{
+			"name": "Contact Management",
+			"item": [
+				{
+					"name": "4. Criar Contato",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João Silva\",\n  \"numero\": 123456789,\n  \"endereco\": \"Rua das Flores, 123\",\n  \"userId\": \"COLE_O_USER_ID_AQUI\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/agenda?publicKey={{publicKey}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["agenda"],
+							"query": [
+								{
+									"key": "publicKey",
+									"value": "{{publicKey}}",
+									"description": "Chave pública RSA (obtida ao criar usuário)"
+								}
+							]
+						},
+						"description": "Cria um novo contato com criptografia. Endereço é criptografado com RSA e tag gerada com Cifra de César."
+					},
+					"response": []
+				},
+				{
+					"name": "5. Listar Contatos do Usuário",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/agenda/list/user/contacts?userId=COLE_O_USER_ID_AQUI",
+							"host": ["{{baseUrl}}"],
+							"path": ["agenda", "list", "user", "contacts"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "COLE_O_USER_ID_AQUI",
+									"description": "UUID do usuário"
+								}
+							]
+						},
+						"description": "Lista todos os contatos de um usuário específico. Os endereços retornam descriptografados."
+					},
+					"response": []
+				},
+				{
+					"name": "6. Buscar Contato por Número",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/agenda/list/user/contact?numero=123456789&userId=COLE_O_USER_ID_AQUI",
+							"host": ["{{baseUrl}}"],
+							"path": ["agenda", "list", "user", "contact"],
+							"query": [
+								{
+									"key": "numero",
+									"value": "123456789",
+									"description": "Número do contato"
+								},
+								{
+									"key": "userId",
+									"value": "COLE_O_USER_ID_AQUI",
+									"description": "UUID do usuário"
+								}
+							]
+						},
+						"description": "Busca um contato específico pelo número telefônico."
+					},
+					"response": []
+				},
+				{
+					"name": "7. Atualizar Contato",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João Pedro Silva\",\n  \"numero\": 987654321,\n  \"endereco\": \"Rua Nova, 456\",\n  \"userId\": \"COLE_O_USER_ID_AQUI\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/agenda?numero=123456789",
+							"host": ["{{baseUrl}}"],
+							"path": ["agenda"],
+							"query": [
+								{
+									"key": "numero",
+									"value": "123456789",
+									"description": "Número do contato a ser atualizado"
+								}
+							]
+						},
+						"description": "Atualiza os dados de um contato existente."
+					},
+					"response": []
+				},
+				{
+					"name": "8. Deletar Contato",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/agenda?numero=123456789&userId=COLE_O_USER_ID_AQUI",
+							"host": ["{{baseUrl}}"],
+							"path": ["agenda"],
+							"query": [
+								{
+									"key": "numero",
+									"value": "123456789",
+									"description": "Número do contato a ser deletado"
+								},
+								{
+									"key": "userId",
+									"value": "COLE_O_USER_ID_AQUI",
+									"description": "UUID do usuário"
+								}
+							]
+						},
+						"description": "Remove um contato específico do usuário."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints relacionados ao gerenciamento de contatos"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
