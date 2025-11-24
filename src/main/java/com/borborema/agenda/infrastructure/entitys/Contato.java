@@ -83,15 +83,16 @@ public class Contato {
 
         List<ContatoDAO> contactsDAO = new ArrayList<>();
         contatos.forEach(contato -> {
-            String endereco = "corrompido";
+            String endereco;
             String nome = contato.nome;
             Long numero = contato.numero;
 
             try {
                 endereco = CriptoService.rsaDecrypt(contato.endereco, privateKey);
             } catch (Exception ex){
-                 nome = "Corrompido";
+                 nome = "#######";
                  numero = 000000l;
+                 endereco = contato.endereco;
             }
 
             ContatoDAO contatoDAO = new ContatoDAO(nome ,numero,endereco) ;
