@@ -46,7 +46,7 @@ public class ContatoService {
        return usuario.getContatos();
     }
 
-    public void salvarContato(ContatoDTO contatoDTO, String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public void salvarContato(ContatoDTO contatoDTO) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         User user = userRepository.findById(contatoDTO.userId()).orElseThrow(() -> new RuntimeException(("Usuario não encontrado")));
 
@@ -54,20 +54,23 @@ public class ContatoService {
 
         contato.setUser(user);
 
-        String cleanKey = publicKey.replaceAll("\\s", "+");
+        String cleanKey = user.getPublicKey().replaceAll("\\s", "+");
 
         byte[] decoded = Base64.getDecoder().decode(cleanKey);
         X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
 
         KeyFactory kf = KeyFactory.getInstance("RSA");
 
-        String endereco = criptoService.rsaEncrypt(contatoDTO.endereco(),kf.generatePublic(spec));
+        PublicKey publicKey = kf.generatePublic(spec);
 
-        contato.setNome(contatoDTO.nome());
+        String endereco = criptoService.rsaEncrypt(contatoDTO.endereco(),publicKey);
+        String nome = criptoService.rsaEncrypt(contatoDTO.nome(),publicKey);
+
+        contato.setNome(nome);
         contato.setNumero(contatoDTO.numero());
         contato.setEndereco(endereco);
 
-        String tag = criptoService.cesarEncrypt(contato.getNome(), chave);
+        String tag = criptoService.cesarEncrypt(contatoDTO.nome(), chave);
 
         contato.setTag(tag);
 

@@ -45,16 +45,16 @@ public class UserService {
 
         try {
            KeyPair keyPair = criptoService.generateRSAKeyPar();
-           newUser.setPrivateKey(Base64.getEncoder().encodeToString(
-                   keyPair.getPrivate().getEncoded()
+           newUser.setPublicKey(Base64.getEncoder().encodeToString(
+                   keyPair.getPublic().getEncoded()
            ));
            this.userRepository.save(newUser);
            return  Base64.getEncoder().encodeToString(
-                   keyPair.getPublic().getEncoded()
+                   keyPair.getPrivate().getEncoded()
            );
 
         } catch (Exception e ){
-            return "Não foi possivel gerar par de chaves";
+            return e.getMessage();
         }
 
     }

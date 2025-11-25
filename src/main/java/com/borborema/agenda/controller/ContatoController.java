@@ -29,32 +29,21 @@ public class ContatoController {
     ContatoService contatoService;
 
     @PostMapping
-    public ResponseEntity<Void> salvarContato(@RequestBody ContatoDTO contato, @RequestParam String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        contatoService.salvarContato(contato, publicKey);
+    public ResponseEntity<Void> salvarContato(@RequestBody ContatoDTO contato) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        contatoService.salvarContato(contato);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("list/user/contacts")
-    public ResponseEntity<List<ContatoDAO>> findUserContacts(@RequestParam UUID userId) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public ResponseEntity<List<ContatoDAO>> findUserContacts(@RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
         List<Contato> contatos = contatoService.findContactsByUserId(userId);
 
-       String stringKey =  contatos.get(0).getUser().getPrivateKey();
-
-        byte[] decoded = Base64.getDecoder().decode(stringKey);
-
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
-
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-
-        PrivateKey privateKey = kf.generatePrivate(keySpec);
 
 
-        List<ContatoDAO> contactsDAO = Contato.contactToDAO(contatos,privateKey );
+
+        List<ContatoDAO> contactsDAO = Contato.contactToDAO(contatos,stringPrivateKey );
 
         return ResponseEntity.ok(contactsDAO);
-
-
-
 
     }
 

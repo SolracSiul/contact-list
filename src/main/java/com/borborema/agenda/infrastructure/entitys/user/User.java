@@ -38,7 +38,7 @@ public class User implements UserDetails {
     private UserRole role;
     @Lob
     @Column(columnDefinition = "TEXT")
-    private String privateKey;
+    private String publicKey;
 
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -136,14 +136,14 @@ public class User implements UserDetails {
         this.userId = userId;
     }
 
-    public String getPrivateKey() {
+    public String getPublicKey() {
 
-        return privateKey;
+        return publicKey;
     }
 
 
-    public void setPrivateKey(String privateKey) {
-        this.privateKey = privateKey;
+    public void setPublicKey(String privateKey) {
+        this.publicKey = privateKey;
     }
 
     /*
