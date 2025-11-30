@@ -8,13 +8,10 @@ import java.util.UUID;
 
 public interface ContatoRepository extends JpaRepository<Contato, Integer> {
 
-    Optional<Contato> findByNumero(Long numero);
+     Optional<Contato> findByNumero(String numero);
 
 
     @Transactional
-    void deleteByNumero(Long numero);
-
-    @Transactional
-    void deleteByNumeroAndUser_UserId(Long numero, UUID userid);
+    void deleteByNumeroAndUser_UserId(String numero, UUID userid);
 
 }

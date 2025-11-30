@@ -33,8 +33,9 @@ public class Contato {
     @Column(name = "nome", unique = true, columnDefinition = "TEXT")
     private String nome;
 
-    @Column(name = "numero", unique = true)
-    private Long numero;
+    @Lob
+    @Column(name = "numero", unique = true, columnDefinition = "TEXT")
+    private String numero;
 
     @Column(name = "tag")
     private String tag;
@@ -64,11 +65,11 @@ public class Contato {
         this.nome = nome;
     }
 
-    public Long getNumero() {
+    public String getNumero() {
         return numero;
     }
 
-    public void setNumero(Long numero) {
+    public void setNumero(String numero) {
         this.numero = numero;
     }
 
@@ -80,31 +81,42 @@ public class Contato {
         this.id = id;
     }
 
-    public static List<ContatoDAO> contactToDAO (List<Contato> contatos, String stringPrivateKey) {
+    public static ContatoDAO toDAO (Contato contato, String stringPrivateKey){
+
+        try{
+            PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
+            String endereco = CriptoService.rsaDecrypt(contato.endereco, privateKey);
+            String nome = CriptoService.rsaDecrypt(contato.nome, privateKey);
+            String numero = CriptoService.rsaDecrypt(contato.numero,privateKey);
+
+            ContatoDAO contatoDAO = new ContatoDAO(nome,numero, endereco);
+
+            return contatoDAO;
+
+        }   catch (Exception e){
+            ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero,contato.endereco);
+            return contatoDAO;
+        }
+    }
+
+    public static List<ContatoDAO> contactListToDAOList (List<Contato> contatos, String stringPrivateKey) {
 
         List<ContatoDAO> contactsDAO = new ArrayList<>();
 
         try{
 
-            String cleanKey = stringPrivateKey.replaceAll("\\s", "+");
-
-            byte[] decoded = Base64.getDecoder().decode(cleanKey);
-
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
-
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-
-            PrivateKey privateKey = kf.generatePrivate(keySpec);
+            PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
 
             contatos.forEach(contato -> {
                         String nome;
                         String endereco;
-                        long numero = contato.numero;
+                        String numero;
 
                         endereco = CriptoService.rsaDecrypt(contato.endereco, privateKey);
                         nome = CriptoService.rsaDecrypt(contato.nome, privateKey);
+                        numero = CriptoService.rsaDecrypt(contato.numero,privateKey);
 
-                        ContatoDAO contatoDAO = new ContatoDAO(nome, numero, endereco);
+                        ContatoDAO contatoDAO = new ContatoDAO(nome,numero, endereco);
                         contactsDAO.add(contatoDAO);
 
                 }
@@ -112,7 +124,7 @@ public class Contato {
 
         } catch (Exception ex){
             contatos.forEach(contato -> {
-                  ContatoDAO contatoDAO = new ContatoDAO(contato.nome, 000000l, contato.endereco);
+                  ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero, contato.endereco);
                   contactsDAO.add(contatoDAO);
                 }
             );

@@ -38,31 +38,33 @@ public class ContatoController {
     public ResponseEntity<List<ContatoDAO>> findUserContacts(@RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
         List<Contato> contatos = contatoService.findContactsByUserId(userId);
 
-
-
-
-        List<ContatoDAO> contactsDAO = Contato.contactToDAO(contatos,stringPrivateKey );
+        List<ContatoDAO> contactsDAO = Contato.contactListToDAOList(contatos,stringPrivateKey );
 
         return ResponseEntity.ok(contactsDAO);
 
     }
 
     @GetMapping("list/user/contact")
-    public ResponseEntity<Contato> buscarContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId){
-        return ResponseEntity.ok(contatoService.buscarContatoUsuarioPorNumero(numero,userId));
+    public ResponseEntity<ContatoDAO> buscarContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        Contato contato = contatoService.buscarContatoUsuarioPorNumero(numero,userId, stringPrivateKey);
+        ContatoDAO contatoDAO = Contato.toDAO(contato,stringPrivateKey);
+        return ResponseEntity.ok(contatoDAO);
     }
 
     @DeleteMapping
     public ResponseEntity deleterContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId){
+        //TODO preciso descriptografar e fazer a deleção
         contatoService.deletarUsuarioContatoPorNumero(numero, userId);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping
-    public ResponseEntity<Void> atualizarContatoPeloNumero(@RequestParam Long numero, @RequestBody ContatoDTO contatoDTO){
-        contatoService.atualizarContatoPorNumero(numero, contatoDTO);
+    public ResponseEntity<Void> atualizarContatoPeloNumero(@RequestParam Long numero, @RequestBody ContatoDTO contatoDTO,@RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        //TODO ADICIONAR O USERID no att
+
+        contatoService.atualizarContatoPorNumero(numero, contatoDTO,stringPrivateKey);
         return ResponseEntity.ok().build();
     }
-
+    //TODO VOLTAR O COLE SEU ID
 
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -54,20 +55,16 @@ public class ContatoService {
 
         contato.setUser(user);
 
-        String cleanKey = user.getPublicKey().replaceAll("\\s", "+");
+        PublicKey publicKey = CriptoService.getPublicKey(user.getPublicKey());
 
-        byte[] decoded = Base64.getDecoder().decode(cleanKey);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
-
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-
-        PublicKey publicKey = kf.generatePublic(spec);
+        String numeroToEncrypt = Long.toString(contatoDTO.numero());
 
         String endereco = criptoService.rsaEncrypt(contatoDTO.endereco(),publicKey);
         String nome = criptoService.rsaEncrypt(contatoDTO.nome(),publicKey);
+        String numero = criptoService.rsaEncrypt(numeroToEncrypt, publicKey);
 
         contato.setNome(nome);
-        contato.setNumero(contatoDTO.numero());
+        contato.setNumero(numero);
         contato.setEndereco(endereco);
 
         String tag = criptoService.cesarEncrypt(contatoDTO.nome(), chave);
@@ -77,9 +74,13 @@ public class ContatoService {
         crepository.saveAndFlush(contato);
     }
 
-    public Contato buscarContatoUsuarioPorNumero(Long numero, UUID userId){
+    public Contato buscarContatoUsuarioPorNumero(Long numero, UUID userId, String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario não encontrado"));
+
+        String stringNumero = Long.toString(numero);
+
+        PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
 
         List<Contato> contatos = user.getContatos();
 
@@ -87,7 +88,11 @@ public class ContatoService {
 
         for(int i = 0; i < contatos.size(); i ++){
             Contato c = contatos.get(i);
-            if(c.getNumero().equals(numero)){
+            String number = c.getNumero();
+
+            String decryptedNumber = CriptoService.rsaDecrypt(number,privateKey);
+
+            if(decryptedNumber.equals(stringNumero)){
                 contato = c;
                 break;
             }
@@ -102,14 +107,37 @@ public class ContatoService {
     }
 
     public void deletarUsuarioContatoPorNumero(Long numero, UUID userId){
-        crepository.deleteByNumeroAndUser_UserId(numero,userId);
+        String stringNumero = Long.toString(numero);
+        User user = userRepository.findById(userId).orElseThrow(()-> new RuntimeException("Usuario não encontrado"));
+        try{
+
+            PublicKey publicKey = CriptoService.getPublicKey(user.getPublicKey());
+
+            String encriptedNumber = criptoService.rsaEncrypt(stringNumero,publicKey);
+
+            crepository.deleteByNumeroAndUser_UserId(encriptedNumber,userId);
+
+        }
+        catch (Exception ex){
+            System.out.println(ex.getMessage());
+        }
     }
 
-    public void atualizarContatoPorNumero(Long numero, ContatoDTO contatoDTO) {
-        Contato contatoBuscadoEntity = buscarContatoUsuarioPorNumero(numero, contatoDTO.userId());
+    public void atualizarContatoPorNumero(Long numero, ContatoDTO contatoDTO, String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        //TODO criptografar o dado na entrada
+
+        Contato contatoBuscadoEntity = buscarContatoUsuarioPorNumero(numero, contatoDTO.userId(), stringPrivateKey);
+
+        User user = contatoBuscadoEntity.getUser();
+
+        PublicKey publicKey = CriptoService.getPublicKey(user.getPublicKey());
+
+        String numeroToEncrypt = Long.toString(contatoDTO.numero());
+
         Contato contatoAtualizado = Contato.builder()
-                .nome(contatoDTO.nome() != null ? contatoDTO.nome() : contatoBuscadoEntity.getNome())
-                .numero(contatoDTO.numero() < 1 ? contatoDTO.numero() : contatoBuscadoEntity.getNumero())
+                .nome(contatoDTO.nome() != null ? criptoService.rsaEncrypt(contatoDTO.nome(),publicKey) : contatoBuscadoEntity.getNome())
+                .numero(contatoDTO.numero() < 1 ?  criptoService.rsaEncrypt(numeroToEncrypt, publicKey) : contatoBuscadoEntity.getNumero())
+                .endereco(contatoDTO.endereco() != null ? criptoService.rsaEncrypt(contatoDTO.endereco(),publicKey) : contatoBuscadoEntity.getEndereco())
                 .id(contatoBuscadoEntity.getId())
                 .user(contatoBuscadoEntity.getUser())
                 .build();
