@@ -6,6 +6,7 @@ import com.borborema.agenda.infrastructure.models.ContatoDTO;
 import com.borborema.agenda.infrastructure.repository.ContatoRepository;
 import com.borborema.agenda.infrastructure.repository.UserRepository;
 import com.borborema.agenda.infrastructure.util.CriptoService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -106,25 +108,17 @@ public class ContatoService {
 
     }
 
-    public void deletarUsuarioContatoPorNumero(Long numero, UUID userId){
-        String stringNumero = Long.toString(numero);
-        User user = userRepository.findById(userId).orElseThrow(()-> new RuntimeException("Usuario não encontrado"));
-        try{
-
-            PublicKey publicKey = CriptoService.getPublicKey(user.getPublicKey());
-
-            String encriptedNumber = criptoService.rsaEncrypt(stringNumero,publicKey);
-
-            crepository.deleteByNumeroAndUser_UserId(encriptedNumber,userId);
-
-        }
-        catch (Exception ex){
-            System.out.println(ex.getMessage());
-        }
+    @Transactional
+    public void deletarUsuarioContatoPorNumero(Long numero, UUID userId, String stringPrivateKey){
+           try {
+              Contato contato = this.buscarContatoUsuarioPorNumero(numero,userId,stringPrivateKey);
+              contato.getUser().getContatos().remove(contato);
+           } catch (Exception ex){
+               System.out.println("Usuario não encontrado");
+           }
     }
 
     public void atualizarContatoPorNumero(Long numero, ContatoDTO contatoDTO, String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        //TODO criptografar o dado na entrada
 
         Contato contatoBuscadoEntity = buscarContatoUsuarioPorNumero(numero, contatoDTO.userId(), stringPrivateKey);
 
@@ -138,6 +132,7 @@ public class ContatoService {
                 .nome(contatoDTO.nome() != null ? criptoService.rsaEncrypt(contatoDTO.nome(),publicKey) : contatoBuscadoEntity.getNome())
                 .numero(contatoDTO.numero() < 1 ?  criptoService.rsaEncrypt(numeroToEncrypt, publicKey) : contatoBuscadoEntity.getNumero())
                 .endereco(contatoDTO.endereco() != null ? criptoService.rsaEncrypt(contatoDTO.endereco(),publicKey) : contatoBuscadoEntity.getEndereco())
+                .tag(contatoBuscadoEntity.getTag())
                 .id(contatoBuscadoEntity.getId())
                 .user(contatoBuscadoEntity.getUser())
                 .build();

@@ -52,19 +52,18 @@ public class ContatoController {
     }
 
     @DeleteMapping
-    public ResponseEntity deleterContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId){
-        //TODO preciso descriptografar e fazer a deleção
-        contatoService.deletarUsuarioContatoPorNumero(numero, userId);
+    public ResponseEntity deleterContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId, @RequestParam String stringPrivateKey){
+        contatoService.deletarUsuarioContatoPorNumero(numero, userId, stringPrivateKey);
         return ResponseEntity.ok().build();
     }
 
     @PutMapping
     public ResponseEntity<Void> atualizarContatoPeloNumero(@RequestParam Long numero, @RequestBody ContatoDTO contatoDTO,@RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        //TODO ADICIONAR O USERID no att
-
         contatoService.atualizarContatoPorNumero(numero, contatoDTO,stringPrivateKey);
         return ResponseEntity.ok().build();
     }
+
     //TODO VOLTAR O COLE SEU ID
+    //TODO tratar erros ................
 
 }
