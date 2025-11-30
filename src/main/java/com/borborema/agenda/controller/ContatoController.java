@@ -29,40 +29,65 @@ public class ContatoController {
     ContatoService contatoService;
 
     @PostMapping
-    public ResponseEntity<Void> salvarContato(@RequestBody ContatoDTO contato) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        contatoService.salvarContato(contato);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> salvarContato(@RequestBody ContatoDTO contato) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        try {
+            contatoService.salvarContato(contato);
+            return ResponseEntity.ok().build();
+        } catch (Exception ex){
+            return ResponseEntity.badRequest().body("Não foi possível cadastrar o contato");
+        }
+
     }
 
     @GetMapping("list/user/contacts")
-    public ResponseEntity<List<ContatoDAO>> findUserContacts(@RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        List<Contato> contatos = contatoService.findContactsByUserId(userId);
+    public ResponseEntity<?> findUserContacts(@RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
-        List<ContatoDAO> contactsDAO = Contato.contactListToDAOList(contatos,stringPrivateKey );
+       try {
+           List<Contato> contatos = contatoService.findContactsByUserId(userId);
 
-        return ResponseEntity.ok(contactsDAO);
+           List<ContatoDAO> contactsDAO = Contato.contactListToDAOList(contatos,stringPrivateKey );
+
+           return ResponseEntity.ok(contactsDAO);
+       } catch (Exception ex){
+           return ResponseEntity.badRequest().body("Não foi possível retornar os contatos");
+       }
 
     }
 
     @GetMapping("list/user/contact")
-    public ResponseEntity<ContatoDAO> buscarContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        Contato contato = contatoService.buscarContatoUsuarioPorNumero(numero,userId, stringPrivateKey);
-        ContatoDAO contatoDAO = Contato.toDAO(contato,stringPrivateKey);
-        return ResponseEntity.ok(contatoDAO);
+    public ResponseEntity<?> buscarContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        try {
+            Contato contato = contatoService.buscarContatoUsuarioPorNumero(numero,userId, stringPrivateKey);
+            ContatoDAO contatoDAO = Contato.toDAO(contato,stringPrivateKey);
+            return ResponseEntity.ok(contatoDAO);
+        } catch (Exception ex){
+            return ResponseEntity.badRequest().body("Não foi possível encontrar o contato");
+        }
+
     }
 
     @DeleteMapping
     public ResponseEntity deleterContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId, @RequestParam String stringPrivateKey){
-        contatoService.deletarUsuarioContatoPorNumero(numero, userId, stringPrivateKey);
-        return ResponseEntity.ok().build();
+
+        try {
+            contatoService.deletarUsuarioContatoPorNumero(numero, userId, stringPrivateKey);
+            return ResponseEntity.ok().build();
+        } catch (Exception ex){
+            return ResponseEntity.badRequest().body("Não foi possível deletar o contato");
+        }
+
     }
 
     @PutMapping
-    public ResponseEntity<Void> atualizarContatoPeloNumero(@RequestParam Long numero, @RequestBody ContatoDTO contatoDTO,@RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        contatoService.atualizarContatoPorNumero(numero, contatoDTO,stringPrivateKey);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> atualizarContatoPeloNumero(@RequestParam Long numero, @RequestBody ContatoDTO contatoDTO,@RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        try {
+            contatoService.atualizarContatoPorNumero(numero, contatoDTO, stringPrivateKey);
+            return ResponseEntity.ok().build();
+        }
+         catch (Exception ex){
+            return ResponseEntity.badRequest().body("Não foi possível atualizar o contato");
+        }
     }
-
-    //TODO tratar erros ................
 
 }
