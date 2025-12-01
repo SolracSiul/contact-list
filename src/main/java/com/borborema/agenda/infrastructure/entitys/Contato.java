@@ -6,13 +6,10 @@ import com.borborema.agenda.infrastructure.util.CriptoService;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.security.KeyFactory;
 import java.security.PrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
-import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 
 
@@ -42,7 +39,10 @@ public class Contato {
 
     @Lob
     @Column(columnDefinition = "TEXT")
-    private String endereco;
+    private String email;
+
+    @Column
+    private Date modiefiedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -85,16 +85,16 @@ public class Contato {
 
         try{
             PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
-            String endereco = CriptoService.rsaDecrypt(contato.endereco, privateKey);
+            String email = CriptoService.rsaDecrypt(contato.email, privateKey);
             String nome = CriptoService.rsaDecrypt(contato.nome, privateKey);
             String numero = CriptoService.rsaDecrypt(contato.numero,privateKey);
 
-            ContatoDAO contatoDAO = new ContatoDAO(nome,numero, endereco);
+            ContatoDAO contatoDAO = new ContatoDAO(nome,numero, email, contato.getModiefiedDate());
 
             return contatoDAO;
 
         }   catch (Exception e){
-            ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero,contato.endereco);
+            ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero,contato.email, contato.getModiefiedDate());
             return contatoDAO;
         }
     }
@@ -109,14 +109,14 @@ public class Contato {
 
             contatos.forEach(contato -> {
                         String nome;
-                        String endereco;
+                        String email;
                         String numero;
 
-                        endereco = CriptoService.rsaDecrypt(contato.endereco, privateKey);
+                        email = CriptoService.rsaDecrypt(contato.email, privateKey);
                         nome = CriptoService.rsaDecrypt(contato.nome, privateKey);
                         numero = CriptoService.rsaDecrypt(contato.numero,privateKey);
 
-                        ContatoDAO contatoDAO = new ContatoDAO(nome,numero, endereco);
+                        ContatoDAO contatoDAO = new ContatoDAO(nome,numero, email, contato.getModiefiedDate());
                         contactsDAO.add(contatoDAO);
 
                 }
@@ -124,7 +124,7 @@ public class Contato {
 
         } catch (Exception ex){
             contatos.forEach(contato -> {
-                  ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero, contato.endereco);
+                  ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero, contato.email,contato.getModiefiedDate());
                   contactsDAO.add(contatoDAO);
                 }
             );
@@ -141,11 +141,19 @@ public class Contato {
         this.tag = tag;
     }
 
-    public String getEndereco() {
-        return endereco;
+    public String getEmail() {
+        return email;
     }
 
-    public void setEndereco(String endereco) {
-        this.endereco = endereco;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Date getModiefiedDate() {
+        return modiefiedDate;
+    }
+
+    public void setModiefiedDate(Date modiefiedDate) {
+        this.modiefiedDate = modiefiedDate;
     }
 }

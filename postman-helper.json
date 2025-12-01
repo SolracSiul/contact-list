@@ -147,7 +147,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"João Silva\",\n  \"numero\": 123456789,\n  \"endereco\": \"Rua das Flores, 123\",\n  \"userId\": \"COLE_O_SEU_USER_ID_AQUI\"\n}"
+              "raw": "{\n  \"nome\": \"João Silva\",\n  \"numero\": 123456789,\n  \"email\": \"joao@gmail.com\",\n  \"userId\": \"{{userId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/agenda",
@@ -182,7 +182,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/agenda/list/user/contacts?userId=COLE_O_SEU_USER_ID_AQUI&stringPrivateKey={{privateKey}}",
+              "raw": "{{baseUrl}}/agenda/list/user/contacts?userId={{userId}}&stringPrivateKey={{privateKey}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -195,7 +195,7 @@
               "query": [
                 {
                   "key": "userId",
-                  "value": "COLE_O_SEU_USER_ID_AQUI",
+                  "value": "{{userId}}",
                   "description": "UUID do usuário"
                 },
                 {
@@ -220,7 +220,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/agenda/list/user/contact?numero=123456789&userId=COLE_O_SEU_USER_ID_AQUI&stringPrivateKey={{privateKey}}",
+              "raw": "{{baseUrl}}/agenda/list/user/contact/number?numero=123456789&userId={{userId}}&stringPrivateKey={{privateKey}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -228,7 +228,8 @@
                 "agenda",
                 "list",
                 "user",
-                "contact"
+                "contact",
+                "number"
               ],
               "query": [
                 {
@@ -238,7 +239,51 @@
                 },
                 {
                   "key": "userId",
-                  "value": "COLE_O_SEU_USER_ID_AQUI",
+                  "value": "{{userId}}",
+                  "description": "UUID do usuário"
+                },
+                {
+                  "key": "stringPrivateKey",
+                  "value": "{{privateKey}}"
+                }
+              ]
+            },
+            "description": "Busca um contato específico pelo número telefônico."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Buscar Contato pelo E-mail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/agenda/list/user/contact/email?email=joao@gmail.com&userId={{userId}}&stringPrivateKey={{privateKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "agenda",
+                "list",
+                "user",
+                "contact",
+                "email"
+              ],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "joao@gmail.com",
+                  "description": "Número do contato"
+                },
+                {
+                  "key": "userId",
+                  "value": "{{userId}}",
                   "description": "UUID do usuário"
                 },
                 {
@@ -268,7 +313,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nome\": \"João Pedro Silva\",\n  \"numero\": 987654321,\n  \"endereco\": \"Rua Nova, 456\",\n  \"userId\": \"COLE_O_SEU_USER_ID_AQUI\"\n}"
+              "raw": "{\n  \"nome\": \"João Pedro Silva\",\n  \"numero\": 987654321,\n  \"email\": \"joaonovo6@gmail.com.br\",\n  \"userId\": \"{{userId}}\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/agenda?numero=123456789&stringPrivateKey={{privateKey}}",
@@ -295,7 +340,7 @@
           "response": []
         },
         {
-          "name": "8. Deletar Contato",
+          "name": "8. Deletar Contato por numero",
           "request": {
             "method": "DELETE",
             "header": [
@@ -306,7 +351,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/agenda?numero=123456789&userId=COLE_O_SEU_USER_ID_AQUI&stringPrivateKey={{privateKey}}",
+              "raw": "{{baseUrl}}/agenda?numero=123456789&userId={{userId}}&stringPrivateKey={{privateKey}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -321,7 +366,7 @@
                 },
                 {
                   "key": "userId",
-                  "value": "COLE_O_SEU_USER_ID_AQUI",
+                  "value": "{{userId}}",
                   "description": "UUID do usuário"
                 },
                 {
@@ -376,10 +421,6 @@
     },
     {
       "key": "privateKey",
-      "value": ""
-    },
-    {
-      "key": "publicKey",
       "value": ""
     }
   ]

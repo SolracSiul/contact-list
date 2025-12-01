@@ -54,7 +54,7 @@ public class ContatoController {
 
     }
 
-    @GetMapping("list/user/contact")
+    @GetMapping("list/user/contact/number")
     public ResponseEntity<?> buscarContatoPeloNumero(@RequestParam Long numero, @RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         try {
@@ -62,7 +62,20 @@ public class ContatoController {
             ContatoDAO contatoDAO = Contato.toDAO(contato,stringPrivateKey);
             return ResponseEntity.ok(contatoDAO);
         } catch (Exception ex){
-            return ResponseEntity.badRequest().body("Não foi possível encontrar o contato");
+            return ResponseEntity.badRequest().body("Não foi possível encontrar o contato pelo número");
+        }
+
+    }
+
+    @GetMapping("list/user/contact/email")
+    public ResponseEntity<?> buscarContatoPeloEmail(@RequestParam String email, @RequestParam UUID userId, @RequestParam String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        try {
+            Contato contato = contatoService.buscarContatoUsuarioPeloEmail(email,userId, stringPrivateKey);
+            ContatoDAO contatoDAO = Contato.toDAO(contato,stringPrivateKey);
+            return ResponseEntity.ok(contatoDAO);
+        } catch (Exception ex){
+            return ResponseEntity.badRequest().body("Não foi possível encontrar o contato pelo e-mail");
         }
 
     }
