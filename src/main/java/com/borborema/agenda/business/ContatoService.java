@@ -6,15 +6,15 @@ import com.borborema.agenda.infrastructure.models.ContatoDTO;
 import com.borborema.agenda.infrastructure.repository.ContatoRepository;
 import com.borborema.agenda.infrastructure.repository.UserRepository;
 import com.borborema.agenda.infrastructure.util.CriptoService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,7 +46,7 @@ public class ContatoService {
        return usuario.getContatos();
     }
 
-    public void salvarContato(ContatoDTO contatoDTO, String publicKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public void salvarContato(ContatoDTO contatoDTO) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         User user = userRepository.findById(contatoDTO.userId()).orElseThrow(() -> new RuntimeException(("Usuario não encontrado")));
 
@@ -54,29 +54,33 @@ public class ContatoService {
 
         contato.setUser(user);
 
-        String cleanKey = publicKey.replaceAll("\\s", "+");
+        PublicKey publicKey = CriptoService.getPublicKey(user.getPublicKey());
 
-        byte[] decoded = Base64.getDecoder().decode(cleanKey);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+        String numeroToEncrypt = Long.toString(contatoDTO.numero());
 
-        KeyFactory kf = KeyFactory.getInstance("RSA");
+        String email = criptoService.rsaEncrypt(contatoDTO.email(),publicKey);
+        String nome = criptoService.rsaEncrypt(contatoDTO.nome(),publicKey);
+        String numero = criptoService.rsaEncrypt(numeroToEncrypt, publicKey);
 
-        String endereco = criptoService.rsaEncrypt(contatoDTO.endereco(),kf.generatePublic(spec));
+        contato.setNome(nome);
+        contato.setNumero(numero);
+        contato.setEmail(email);
+        contato.setModiefiedDate(new Date());
 
-        contato.setNome(contatoDTO.nome());
-        contato.setNumero(contatoDTO.numero());
-        contato.setEndereco(endereco);
-
-        String tag = criptoService.cesarEncrypt(contato.getNome(), chave);
+        String tag = criptoService.cesarEncrypt(contatoDTO.nome(), chave);
 
         contato.setTag(tag);
 
         crepository.saveAndFlush(contato);
     }
 
-    public Contato buscarContatoUsuarioPorNumero(Long numero, UUID userId){
+    public Contato buscarContatoUsuarioPorNumero(Long numero, UUID userId, String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
 
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario não encontrado"));
+
+        String stringNumero = Long.toString(numero);
+
+        PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
 
         List<Contato> contatos = user.getContatos();
 
@@ -84,29 +88,50 @@ public class ContatoService {
 
         for(int i = 0; i < contatos.size(); i ++){
             Contato c = contatos.get(i);
-            if(c.getNumero().equals(numero)){
+            String number = c.getNumero();
+
+            String decryptedNumber = CriptoService.rsaDecrypt(number,privateKey);
+
+            if(decryptedNumber.equals(stringNumero)){
                 contato = c;
                 break;
             }
         }
 
         if(contato == null){
-            throw  new RuntimeException("Numero não encontrado");
+            throw  new RuntimeException("Contato não encontrado");
         }
 
         return contato;
 
     }
 
-    public void deletarUsuarioContatoPorNumero(Long numero, UUID userId){
-        crepository.deleteByNumeroAndUser_UserId(numero,userId);
+    @Transactional
+    public void deletarUsuarioContatoPorNumero(Long numero, UUID userId, String stringPrivateKey){
+           try {
+              Contato contato = this.buscarContatoUsuarioPorNumero(numero,userId,stringPrivateKey);
+              contato.getUser().getContatos().remove(contato);
+           } catch (Exception ex){
+               System.out.println("Usuario não encontrado");
+           }
     }
 
-    public void atualizarContatoPorNumero(Long numero, ContatoDTO contatoDTO) {
-        Contato contatoBuscadoEntity = buscarContatoUsuarioPorNumero(numero, contatoDTO.userId());
+    public void atualizarContatoPorNumero(Long numero, ContatoDTO contatoDTO, String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+
+        Contato contatoBuscadoEntity = buscarContatoUsuarioPorNumero(numero, contatoDTO.userId(), stringPrivateKey);
+
+        User user = contatoBuscadoEntity.getUser();
+
+        PublicKey publicKey = CriptoService.getPublicKey(user.getPublicKey());
+
+        String numeroToEncrypt = Long.toString(contatoDTO.numero());
+
         Contato contatoAtualizado = Contato.builder()
-                .nome(contatoDTO.nome() != null ? contatoDTO.nome() : contatoBuscadoEntity.getNome())
-                .numero(contatoDTO.numero() < 1 ? contatoDTO.numero() : contatoBuscadoEntity.getNumero())
+                .nome(contatoDTO.nome() != null ? criptoService.rsaEncrypt(contatoDTO.nome(),publicKey) : contatoBuscadoEntity.getNome())
+                .numero(contatoDTO.numero() < 1 ?  criptoService.rsaEncrypt(numeroToEncrypt, publicKey) : contatoBuscadoEntity.getNumero())
+                .email(contatoDTO.email() != null ? criptoService.rsaEncrypt(contatoDTO.email(),publicKey) : contatoBuscadoEntity.getEmail())
+                .modiefiedDate(new Date())
+                .tag(contatoBuscadoEntity.getTag())
                 .id(contatoBuscadoEntity.getId())
                 .user(contatoBuscadoEntity.getUser())
                 .build();
@@ -114,4 +139,32 @@ public class ContatoService {
     }
 
 
+    public Contato buscarContatoUsuarioPeloEmail(String email, UUID userId, String stringPrivateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario não encontrado"));
+
+
+        PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
+
+        List<Contato> contatos = user.getContatos();
+
+        Contato contato = new Contato();
+
+        for(int i = 0; i < contatos.size(); i ++){
+            Contato c = contatos.get(i);
+            String iterationEmail = c.getEmail();
+
+            String decryptedNumber = CriptoService.rsaDecrypt(iterationEmail,privateKey);
+
+            if(decryptedNumber.equals(email)){
+                contato = c;
+                break;
+            }
+        }
+
+        if(contato == null){
+            throw  new RuntimeException("Contato não encontrado");
+        }
+
+        return contato;
+    }
 }

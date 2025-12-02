@@ -6,10 +6,10 @@ import com.borborema.agenda.infrastructure.util.CriptoService;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.PrivateKey;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -26,19 +26,23 @@ public class Contato {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-
-    @Column(name = "nome", unique = true)
+    @Lob
+    @Column(name = "nome", unique = true, columnDefinition = "TEXT")
     private String nome;
 
-    @Column(name = "numero", unique = true)
-    private Long numero;
+    @Lob
+    @Column(name = "numero", unique = true, columnDefinition = "TEXT")
+    private String numero;
 
     @Column(name = "tag")
     private String tag;
 
     @Lob
     @Column(columnDefinition = "TEXT")
-    private String endereco;
+    private String email;
+
+    @Column
+    private Date modiefiedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -61,11 +65,11 @@ public class Contato {
         this.nome = nome;
     }
 
-    public Long getNumero() {
+    public String getNumero() {
         return numero;
     }
 
-    public void setNumero(Long numero) {
+    public void setNumero(String numero) {
         this.numero = numero;
     }
 
@@ -77,27 +81,54 @@ public class Contato {
         this.id = id;
     }
 
-    public static List<ContatoDAO> contactToDAO (List<Contato> contatos, PrivateKey privateKey) {
+    public static ContatoDAO toDAO (Contato contato, String stringPrivateKey){
 
+        try{
+            PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
+            String email = CriptoService.rsaDecrypt(contato.email, privateKey);
+            String nome = CriptoService.rsaDecrypt(contato.nome, privateKey);
+            String numero = CriptoService.rsaDecrypt(contato.numero,privateKey);
 
+            ContatoDAO contatoDAO = new ContatoDAO(nome,numero, email, contato.getModiefiedDate());
+
+            return contatoDAO;
+
+        }   catch (Exception e){
+            ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero,contato.email, contato.getModiefiedDate());
+            return contatoDAO;
+        }
+    }
+
+    public static List<ContatoDAO> contactListToDAOList (List<Contato> contatos, String stringPrivateKey) {
 
         List<ContatoDAO> contactsDAO = new ArrayList<>();
-        contatos.forEach(contato -> {
-            String endereco = "corrompido";
-            String nome = contato.nome;
-            Long numero = contato.numero;
 
-            try {
-                endereco = CriptoService.rsaDecrypt(contato.endereco, privateKey);
-            } catch (Exception ex){
-                 nome = "Corrompido";
-                 numero = 000000l;
-            }
+        try{
 
-            ContatoDAO contatoDAO = new ContatoDAO(nome ,numero,endereco) ;
-            contactsDAO.add(contatoDAO);
-           }
-        );
+            PrivateKey privateKey = CriptoService.getPrivateKey(stringPrivateKey);
+
+            contatos.forEach(contato -> {
+                        String nome;
+                        String email;
+                        String numero;
+
+                        email = CriptoService.rsaDecrypt(contato.email, privateKey);
+                        nome = CriptoService.rsaDecrypt(contato.nome, privateKey);
+                        numero = CriptoService.rsaDecrypt(contato.numero,privateKey);
+
+                        ContatoDAO contatoDAO = new ContatoDAO(nome,numero, email, contato.getModiefiedDate());
+                        contactsDAO.add(contatoDAO);
+
+                }
+            );
+
+        } catch (Exception ex){
+            contatos.forEach(contato -> {
+                  ContatoDAO contatoDAO = new ContatoDAO(contato.nome, contato.numero, contato.email,contato.getModiefiedDate());
+                  contactsDAO.add(contatoDAO);
+                }
+            );
+        }
 
         return contactsDAO;
     }
@@ -110,11 +141,19 @@ public class Contato {
         this.tag = tag;
     }
 
-    public String getEndereco() {
-        return endereco;
+    public String getEmail() {
+        return email;
     }
 
-    public void setEndereco(String endereco) {
-        this.endereco = endereco;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Date getModiefiedDate() {
+        return modiefiedDate;
+    }
+
+    public void setModiefiedDate(Date modiefiedDate) {
+        this.modiefiedDate = modiefiedDate;
     }
 }

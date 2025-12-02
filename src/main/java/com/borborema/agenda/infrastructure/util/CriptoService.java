@@ -3,10 +3,11 @@ package com.borborema.agenda.infrastructure.util;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 @Component
 public class CriptoService {
@@ -60,6 +61,34 @@ public class CriptoService {
         KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
         gen.initialize(2048);
         return gen.generateKeyPair();
+    }
+
+    public static PublicKey getPublicKey (String stringKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        String cleanKey = stringKey.replaceAll("\\s", "+");
+
+        byte[] decoded = Base64.getDecoder().decode(cleanKey);
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(decoded);
+
+
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+
+        PublicKey publicKey = kf.generatePublic(spec);
+
+        return publicKey;
+    }
+
+    public static PrivateKey getPrivateKey(String stringKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        String cleanKey = stringKey.replaceAll("\\s", "+");
+
+        byte[] decoded = Base64.getDecoder().decode(cleanKey);
+
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);
+
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+
+        PrivateKey privateKey = kf.generatePrivate(keySpec);
+
+        return privateKey;
     }
 
 }
