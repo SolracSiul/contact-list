@@ -63,16 +63,16 @@ class DatabaseSystemTest {
         // Simula usuário criando múltiplos contatos
         Contato contato1 = Contato.builder()
                 .nome("Maria Silva")
-                .numero(111222333L)
-                .endereco("Rua A, 123")
+                .numero("111222333")
+                .email("maria@test.com")
                 .tag("pduldiloyd")
                 .user(usuarioTeste)
                 .build();
 
         Contato contato2 = Contato.builder()
                 .nome("João Pedro")
-                .numero(444555666L)
-                .endereco("Avenida B, 456")
+                .numero("444555666")
+                .email("joao@test.com")
                 .tag("mrrishgur")
                 .user(usuarioTeste)
                 .build();
@@ -101,7 +101,7 @@ class DatabaseSystemTest {
     @Order(4)
     void test04_FluxoCompleto_BuscarContato() {
         // Simula usuário buscando um contato específico
-        var contatoOpt = contatoRepository.findByNumero(111222333L);
+        var contatoOpt = contatoRepository.findByNumero("111222333");
 
         assertTrue(contatoOpt.isPresent());
         assertEquals("Maria Silva", contatoOpt.get().getNome());
@@ -112,15 +112,15 @@ class DatabaseSystemTest {
     @Order(5)
     void test05_FluxoCompleto_AtualizarContato() {
         // Simula usuário atualizando informações de um contato
-        var contatoOpt = contatoRepository.findByNumero(111222333L);
+        var contatoOpt = contatoRepository.findByNumero("111222333");
         assertTrue(contatoOpt.isPresent());
 
         Contato contato = contatoOpt.get();
         contato.setNome("Maria Silva Santos");
-        contato.setNumero(999888777L);
+        contato.setNumero("999888777");
         contatoRepository.save(contato);
 
-        var contatoAtualizado = contatoRepository.findByNumero(999888777L);
+        var contatoAtualizado = contatoRepository.findByNumero("999888777");
         assertTrue(contatoAtualizado.isPresent());
         assertEquals("Maria Silva Santos", contatoAtualizado.get().getNome());
         System.out.println("✓ Fluxo 5: Contato atualizado no sistema");
@@ -130,12 +130,12 @@ class DatabaseSystemTest {
     @Order(6)
     void test06_FluxoCompleto_DeletarContato() {
         // Simula usuário deletando um contato
-        var contatoOpt = contatoRepository.findByNumero(444555666L);
+        var contatoOpt = contatoRepository.findByNumero("444555666");
         assertTrue(contatoOpt.isPresent());
 
         contatoRepository.delete(contatoOpt.get());
 
-        var contatoDeletado = contatoRepository.findByNumero(444555666L);
+        var contatoDeletado = contatoRepository.findByNumero("444555666");
         assertTrue(contatoDeletado.isEmpty());
         System.out.println("✓ Fluxo 6: Contato deletado do sistema");
     }
@@ -161,8 +161,8 @@ class DatabaseSystemTest {
         for (int i = 0; i < 50; i++) {
             Contato contato = Contato.builder()
                     .nome("Contato " + i)
-                    .numero(1000000L + i)
-                    .endereco("Endereço " + i)
+                    .numero(String.valueOf(1000000L + i))
+                    .email("contato" + i + "@test.com")
                     .tag("tag" + i)
                     .user(usuarioTeste)
                     .build();
